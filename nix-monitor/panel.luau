@@ -42,15 +42,15 @@ local function labelBox(subtext, text, glyph)
 	return ui.column({
 		fill = getBackgroundColor(),
 		flexGrow = 1,
-		height = 88,
+		height = 72,
 		radius = 8,
 		align = "center",
-		padding = 12,
+		padding = 8,
 		justify = "space_between",
 	}, {
 		ui.glyph({
 			name = glyph,
-			size = 30,
+			size = 24,
 		}),
 		ui.label({
 			text = text,
@@ -247,8 +247,9 @@ local function packageSummary()
 		fill = getBackgroundColor(),
 		align = "center",
 		justify = "space_between",
-		paddingV = 4,
-		paddingH = 8,
+		gap = 12,
+		paddingV = 8,
+		paddingH = 12,
 		radius = 8,
 		onClick = "onPackagesSummaryClicked",
 	}, {
@@ -467,21 +468,19 @@ local function render()
 			ui.spacer({ width = 16 }),
 			statLabel(`{tr("panel.closure_size")}: {getState("closureSize")}`, "server"),
 		}),
-		ui.separator({
-			thickness = 2,
-			orientation = "horizontal",
-			spacing = 2,
+		ui.column({
+			gap = 12,
+		}, {
+			ui.label({
+				text = `{tr("panel.last_checked")}: {lastCheckTimeStr}`,
+				fontSize = 12,
+			}),
+			ui.row({
+				gap = 12,
+				align = "center",
+			}, buttons),
+			packageSummary(),
 		}),
-		ui.label({
-			text = `{tr("panel.last_checked")}: {lastCheckTimeStr}`,
-			fontSize = 12,
-		}),
-		ui.row({
-			gap = 8,
-			align = "center",
-			justify = "space_between",
-		}, buttons),
-		packageSummary(),
 	}))
 end
 
