@@ -269,7 +269,7 @@ placement       = "attached"
 position        = "auto"
 open_near_click = true
 width           = 430
-height          = 350
+height          = 320
 
 [[service]]
 id      = "service"

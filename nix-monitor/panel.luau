@@ -237,6 +237,12 @@ local function packageDetails()
 end
 
 local function packageSummary()
+	local status = getState("packageComparisonStatus")
+	local hasPackageUpdates = #pendingPackages("system") > 0 or #pendingPackages("user") > 0
+	if status == "ready" and not hasPackageUpdates then
+		return nil
+	end
+
 	return ui.row({
 		fill = getBackgroundColor(),
 		align = "center",
@@ -305,7 +311,7 @@ local function renderPackageDetails()
 		-- Flex allocates an exact height to the viewport before it measures
 		-- its content. A height on ui.scroll alone only sets min/max bounds.
 		ui.column({
-			height = 210,
+			height = 180,
 			align = "stretch",
 		}, {
 			ui.scroll({
