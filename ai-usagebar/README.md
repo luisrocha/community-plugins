@@ -12,7 +12,7 @@ It does not call provider APIs or read credential files.
 
 | Field | Value |
 | --- | --- |
-| ID | `felipeartur/ai-usagebar` |
+| ID | `luisrocha/ai-usagebar` |
 | Entries | Bar widget: `bar`; panel: `panel`; service: `poller` |
 
 ## Requirements
@@ -31,7 +31,7 @@ older shell. Plugin version 1.1.0 remains available for API 9.
 
 ## Usage
 
-Add `felipeartur/ai-usagebar:bar` to a bar in Settings, Bar. The capsule shows
+Add `luisrocha/ai-usagebar:bar` to a bar in Settings, Bar. The capsule shows
 one provider's headline percentage beside its icon. Readings use the bar's text
 color, the theme's `secondary` color for high usage, and `error` for critical
 usage. Icons keep their normal color unless a read fails.
@@ -56,12 +56,24 @@ percentage points ahead of elapsed time; `↓3` means three behind), both, or
 neither. Countdowns show days and hours from 24 hours onward, and hours and
 minutes below that.
 
+The round semaphore immediately right of the provider icon reports the local Codex agent:
+green is idle, yellow is running, and red means it is waiting for your input or
+an approval. Turn **Show agent semaphore** off in the widget settings when you
+only want quota information.
+
+Codex lifecycle hooks supply that state. Merge
+[`codex-hooks.example.json`](codex-hooks.example.json) into
+`~/.codex/hooks.json`, restart Codex, then review and trust the new hooks
+with `/hooks`. The hooks send only `idle`, `running`, or `waiting` to the plugin
+over Noctalia's local IPC; they do not send prompts or responses. Without the
+hooks, the semaphore remains green.
+
 When editing `config.toml` by hand, create a named instance. A raw widget id in
 the bar list creates an anonymous instance with no settings of its own:
 
 ```toml
 [widget.ai_usage]
-type = "felipeartur/ai-usagebar:bar"
+type = "luisrocha/ai-usagebar:bar"
 visualization = "gauge"
 provider_limit = 2
 
@@ -122,7 +134,7 @@ the panel during a network interruption.
 To open the panel from a terminal:
 
 ```sh
-noctalia msg panel-toggle felipeartur/ai-usagebar:panel
+noctalia msg panel-toggle luisrocha/ai-usagebar:panel
 ```
 
 ## Settings
@@ -142,6 +154,7 @@ Per widget instance, so two capsules can follow two providers:
 | `visualization` | `select` | `none` | `gauge` or `none`, as described above. |
 | `show_value` | `bool` | `true` | Show the percentage as text. |
 | `show_glyph` | `bool` | `true` | Show the provider's icon. |
+| `show_agent_status` | `bool` | `true` | Show the green/yellow/red Codex agent semaphore. |
 | `glyph_position` | `select` | `before` | `before` or `after` the reading. |
 | `provider_limit` | `int` | `1` | How many providers one capsule carries, busiest first, from 1 to 4. Only applies on `auto`. |
 | `extras` | `select` | `countdown` | Information beside the percentage: `countdown`, `pace`, `both` or `none`. |
@@ -153,14 +166,22 @@ Per widget instance, so two capsules can follow two providers:
 Force a refresh without waiting for the interval:
 
 ```sh
-noctalia msg plugin felipeartur/ai-usagebar:poller all refresh
+noctalia msg plugin luisrocha/ai-usagebar:poller all refresh
 ```
 
 Point the panel at a provider, by the id `ai-usagebar` uses for it:
 
 ```sh
-noctalia msg plugin felipeartur/ai-usagebar:poller all select anthropic
+noctalia msg plugin luisrocha/ai-usagebar:poller all select anthropic
 ```
+
+Set the agent semaphore state (normally called by the supplied Codex hooks):
+
+```sh
+noctalia msg plugin luisrocha/ai-usagebar:poller all agent-status running
+```
+
+The accepted payloads are `idle`, `running`, and `waiting`.
 
 ## Notes
 
@@ -169,6 +190,8 @@ noctalia msg plugin felipeartur/ai-usagebar:poller all select anthropic
   the panel, or from the IPC event above. Capsules and the panel are subscribers
   of plugin state, so a second monitor or a second capsule costs no extra
   process.
+- The optional Codex hooks spawn `noctalia msg` on lifecycle changes. They read
+  no files and pass only the state word through local IPC.
 - The plugin makes no network calls and writes no files of its own. Everything
   it knows arrives on that command's stdout.
 - A provider whose service is down leaves the bar and panel on the first report

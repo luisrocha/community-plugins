@@ -155,6 +155,13 @@ end
 local inFlight = false
 local pendingRefresh = false
 
+local AGENT_STATUSES = { idle = true, running = true, waiting = true }
+
+local function setAgentStatus(value)
+    local status = tostring(value or "")
+    if AGENT_STATUSES[status] then noctalia.state.set("agent_status", status) end
+end
+
 -- A floor between spawns. Opening the panel asks for a read, and a panel opens as
 -- fast as a pointer can click.
 local MIN_GAP_MS = 2000
@@ -233,7 +240,11 @@ function onIpc(event, payload)
     if event == "select" and type(payload) == "string" and payload ~= "" then
         noctalia.state.set("selected", payload)
     end
+    -- Codex lifecycle hooks drive this event. Unknown values are ignored so a
+    -- typo cannot leave every capsule with an undefined colour.
+    if event == "agent-status" then setAgentStatus(payload) end
 end
 
+if noctalia.state.get("agent_status") == nil then setAgentStatus("idle") end
 noctalia.setUpdateInterval(intervalMs())
 refresh()

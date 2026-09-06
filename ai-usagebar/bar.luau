@@ -11,6 +11,7 @@ local extras = tostring(noctalia.getConfig("extras") or "countdown")
 local visualization = tostring(noctalia.getConfig("visualization") or "none")
 local showValue = noctalia.getConfig("show_value") ~= false
 local showGlyph = noctalia.getConfig("show_glyph") ~= false
+local showAgentStatus = noctalia.getConfig("show_agent_status") ~= false
 local glyphAfter = tostring(noctalia.getConfig("glyph_position") or "before") == "after"
 local limit = math.max(1, math.min(4, tonumber(noctalia.getConfig("provider_limit")) or 1))
 local showName = noctalia.getConfig("show_name") == true
@@ -28,6 +29,21 @@ local NO_FAILURE, asFailure = shared.NO_FAILURE, shared.asFailure
 local unavailable, warning = shared.unavailable, shared.warning
 
 local failure = NO_FAILURE
+local agentStatus = tostring(noctalia.state.get("agent_status") or "idle")
+
+-- A traffic-light dot is deliberately separate from the provider glyph: the
+-- provider identifies the plan, while this reports what the local agent is
+-- doing. Hex colours keep the semaphore green/yellow/red under every theme.
+local AGENT_STATUS_COLORS = {
+    idle = "#4caf50",
+    running = "#fbc02d",
+    waiting = "#f44336",
+}
+
+local function semaphore()
+    local fill = AGENT_STATUS_COLORS[agentStatus] or AGENT_STATUS_COLORS.idle
+    return ui.box({ width = 10, height = 10, radius = 5, fill = fill })
+end
 
 -- ── Report helpers ────────────────────────────────────────────────────────────
 
@@ -141,12 +157,19 @@ local function bars(percent, elapsed, tint, width)
     return ui.column({ gap = 1, align = "center" }, stack)
 end
 
-local function chip(entry, flagged)
+local function chip(entry, flagged, agentNode)
     if shared.readFailure(entry) then
-        local nodes = { ui.label({ text = "—", fontSize = 11, color = "on_surface_variant" }) }
-        if showGlyph then
-            table.insert(nodes, glyphAfter and #nodes + 1 or 1,
-                ui.glyph({ name = providerGlyph(entry.id), size = 14, color = "error" }))
+        local nodes = {}
+        local glyph = showGlyph
+            and ui.glyph({ name = providerGlyph(entry.id), size = 14, color = "error" }) or nil
+        if not glyphAfter then
+            if glyph then nodes[#nodes + 1] = glyph end
+            if agentNode then nodes[#nodes + 1] = agentNode end
+        end
+        nodes[#nodes + 1] = ui.label({ text = "—", fontSize = 11, color = "on_surface_variant" })
+        if glyphAfter then
+            if glyph then nodes[#nodes + 1] = glyph end
+            if agentNode then nodes[#nodes + 1] = agentNode end
         end
         return ui.row({ gap = 5, align = "center" }, nodes)
     end
@@ -231,13 +254,19 @@ local function chip(entry, flagged)
     local nodes = {}
     local function add(node) if node ~= nil then nodes[#nodes + 1] = node end end
 
-    if not glyphAfter then add(glyph) end
+    if not glyphAfter then
+        add(glyph)
+        add(agentNode)
+    end
     add(name)
     if percent ~= nil and visualization == "gauge" then
         add(bars(percent, elapsedPercent(metric and metric.detail), fill, 30))
     end
     add(pct)
-    if glyphAfter then add(glyph) end
+    if glyphAfter then
+        add(glyph)
+        add(agentNode)
+    end
 
     if (extras == "countdown" or extras == "both") and not hasSubmodels then
         local left = fixedCountdown(metric)
@@ -360,24 +389,26 @@ local function render()
     local flagged = failure.code ~= "" and #picked > 0
 
     local children = {}
-    for _, entry in ipairs(picked) do
+    for index, entry in ipairs(picked) do
         -- Two providers run together on a gap alone: the countdown of the first
         -- reads as part of the second. A dot, not a rule -- a vertical
         -- `ui.separator` in a row came out two pixels wide by one tall.
-        if #children > 0 then
+        if index > 1 then
             children[#children + 1] = ui.label({ text = "·", fontSize = 11,
                                                  color = "on_surface_variant" })
         end
-        children[#children + 1] = chip(entry, flagged)
+        local agentNode = showAgentStatus and index == 1 and semaphore() or nil
+        children[#children + 1] = chip(entry, flagged, agentNode)
     end
 
-    if #children == 0 then
-        -- One glyph, coloured by the state. A second icon beside it would read as
-        -- a second problem.
-        children[1] = ui.glyph({
+    if #picked == 0 then
+        -- One fallback glyph, coloured by the read state. The optional semaphore
+        -- remains beside it because it reports the agent, not a second failure.
+        children[#children + 1] = ui.glyph({
             name = "brain", size = 14,
             color = failure.code ~= "" and "error" or "on_surface_variant",
         })
+        if showAgentStatus then children[#children + 1] = semaphore() end
     elseif hidden > 0 then
         children[#children + 1] = ui.label({ text = "+" .. tostring(hidden), fontSize = 10,
                                              color = "on_surface_variant", maxLines = 1 })
@@ -402,11 +433,16 @@ noctalia.state.watch("error", function(value)
     render()
 end)
 
+noctalia.state.watch("agent_status", function(value)
+    agentStatus = tostring(value or "idle")
+    render()
+end)
+
 function onClick()
     local picked = shown()
     -- One panel serves every capsule and is not told which one opened it.
     noctalia.state.set("selected", picked[1] ~= nil and picked[1].id or wantedEntryId())
-    noctalia.togglePanel("felipeartur/ai-usagebar:panel")
+    noctalia.togglePanel("luisrocha/ai-usagebar:panel")
 end
 
 

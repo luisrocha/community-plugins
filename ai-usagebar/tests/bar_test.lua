@@ -25,18 +25,23 @@ local function entry(id, displayName, percent)
     }
 end
 
-local function loadBar(config, report, err)
+local function loadBar(config, report, err, agentStatus)
     local values = {
         report = report,
         error = err or { code = "", detail = "" },
+        agent_status = agentStatus,
     }
+    local watchers = {}
     local rendered, tooltip
     local noctalia = {
         getConfig = function(key) return config[key] end,
         state = {
             get = function(key) return values[key] end,
-            set = function(key, value) values[key] = value end,
-            watch = function() end,
+            set = function(key, value)
+                values[key] = value
+                if watchers[key] then watchers[key](value) end
+            end,
+            watch = function(key, callback) watchers[key] = callback end,
         },
         setUpdateInterval = function() end,
         togglePanel = function() end,
@@ -76,6 +81,7 @@ local function loadBar(config, report, err)
     return {
         env = env,
         values = values,
+        setState = noctalia.state.set,
         rendered = function() return rendered end,
         tooltip = function() return tooltip end,
     }
@@ -97,6 +103,24 @@ local function containsGlyph(node, wanted)
         if containsGlyph(child, wanted) then return true end
     end
     return false
+end
+
+local function countBoxesWithFill(node, wanted)
+    if type(node) ~= "table" then return 0 end
+    local count = node.kind == "box" and node.props.fill == wanted and 1 or 0
+    for _, child in ipairs(node.children or {}) do
+        count = count + countBoxesWithFill(child, wanted)
+    end
+    return count
+end
+
+local function flattenedMarks(node, marks)
+    marks = marks or {}
+    if type(node) ~= "table" then return marks end
+    if node.kind == "glyph" then marks[#marks + 1] = "glyph:" .. tostring(node.props.name) end
+    if node.kind == "box" then marks[#marks + 1] = "box:" .. tostring(node.props.fill) end
+    for _, child in ipairs(node.children or {}) do flattenedMarks(child, marks) end
+    return marks
 end
 
 local namedReport = {
@@ -420,3 +444,27 @@ assert(containsGlyph(iconOnly.rendered(), "brand-google") and not containsText(i
        "show_value=false must preserve enabled model glyphs")
 local quietFailure = loadBar({ vendor = "openai", show_glyph = false }, parserFailure.values.report)
 assert(containsText(quietFailure.rendered(), "—"), "hidden glyph must not create a hole before the parser error label")
+
+local running = loadBar(steadyConfig, steadyReport, nil, "running")
+assert(countBoxesWithFill(running.rendered(), "#fbc02d") == 1,
+    "a running agent should draw one round yellow semaphore")
+local runningMarks = flattenedMarks(running.rendered())
+assert(runningMarks[1] == "glyph:brand-openai" and runningMarks[2] == "box:#fbc02d",
+    "the semaphore should sit immediately right of the provider glyph")
+assert(not containsText(running.rendered(), "·"),
+    "the semaphore should not look like an extra provider")
+running.setState("agent_status", "waiting")
+assert(countBoxesWithFill(running.rendered(), "#f44336") == 1,
+    "the semaphore should rerender when the shared agent state changes")
+local waiting = loadBar(steadyConfig, steadyReport, nil, "waiting")
+assert(countBoxesWithFill(waiting.rendered(), "#f44336") == 1,
+    "an agent waiting for input should draw one red semaphore")
+local idle = loadBar(steadyConfig, steadyReport, nil, "idle")
+assert(countBoxesWithFill(idle.rendered(), "#4caf50") == 1,
+    "an idle agent should draw one green semaphore")
+local semaphoreOff = loadBar({
+    vendor = "openai", account = "", extras = "none", visualization = "none",
+    show_agent_status = false,
+}, steadyReport, nil, "waiting")
+assert(countBoxesWithFill(semaphoreOff.rendered(), "#f44336") == 0,
+    "the widget setting should hide the semaphore")

@@ -38,6 +38,10 @@
       "description": "The provider's icon. Off leaves the reading on its own.",
       "label": "Show icon"
     },
+    "show_agent_status": {
+      "description": "Shows a green, yellow, or red dot when the agent is idle, running, or waiting for your input.",
+      "label": "Show agent semaphore"
+    },
     "show_name": {
       "description": "Adds the product name next to the percentage, so two capsules do not look alike.",
       "label": "Show provider name"

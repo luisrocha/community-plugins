@@ -1,0 +1,83 @@
+{
+  "description": "Publish the current Codex agent state to the AI Usage Noctalia plugin.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "noctalia msg plugin luisrocha/ai-usagebar:poller all agent-status running >/dev/null 2>&1",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "noctalia msg plugin luisrocha/ai-usagebar:poller all agent-status waiting >/dev/null 2>&1",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^request_user_input$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "noctalia msg plugin luisrocha/ai-usagebar:poller all agent-status waiting >/dev/null 2>&1",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "noctalia msg plugin luisrocha/ai-usagebar:poller all agent-status running >/dev/null 2>&1",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "noctalia msg plugin luisrocha/ai-usagebar:poller all agent-status idle >/dev/null 2>&1",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "Interrupt": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "noctalia msg plugin luisrocha/ai-usagebar:poller all agent-status idle >/dev/null 2>&1",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "noctalia msg plugin luisrocha/ai-usagebar:poller all agent-status idle >/dev/null 2>&1",
+            "timeout": 3
+          }
+        ]
+      }
+    ]
+  }
+}

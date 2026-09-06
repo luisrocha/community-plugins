@@ -1,8 +1,8 @@
-id = "felipeartur/ai-usagebar"
+id = "luisrocha/ai-usagebar"
 name = "AI Usage"
-version = "2.2.1"
+version = "2.3.0"
 plugin_api = 22
-author = "felipeartur"
+author = "felipeartur, luisrocha"
 license = "MIT"
 icon = "brain"
 description = "AI plan usage in the bar, powered by the ai-usagebar CLI."
@@ -44,7 +44,7 @@ entry = "bar.luau"
 # panel lands on the provider this capsule tracks, which `panel-toggle` alone
 # cannot do.
   [widget.actions]
-  right = "plugin felipeartur/ai-usagebar:poller all refresh"
+  right = "plugin luisrocha/ai-usagebar:poller all refresh"
 
 # Per-instance, so a second capsule can track a second provider.
 [[widget.setting]]
@@ -112,6 +112,13 @@ key = "show_glyph"
 type = "bool"
 label_key = "settings.show_glyph.label"
 description_key = "settings.show_glyph.description"
+default = true
+
+[[widget.setting]]
+key = "show_agent_status"
+type = "bool"
+label_key = "settings.show_agent_status.label"
+description_key = "settings.show_agent_status.description"
 default = true
 
 [[widget.setting]]
