@@ -10,6 +10,10 @@ function getState(key)
 	return noctalia.state.get(key)
 end
 
+function watchState(key, cb)
+	noctalia.state.watch(key, cb)
+end
+
 function displayWidget(glyph: string, text: string, color: string?)
 	local _color = color or "on_surface"
 
@@ -30,9 +34,8 @@ function displayWidget(glyph: string, text: string, color: string?)
 	end
 end
 
--- Hooks
-function update()
-	if getState("isRemoteCheckRunning") then
+local function refreshWidget()
+	if getState("isRemoteCheckRunning") or getState("packageComparisonStatus") == "loading" then
 		displayWidget(cfg("checking_glyph"), tr("bar.checking"), cfg("checking_color"))
 	else
 		if getState("isUpdateAvailable") then
@@ -47,6 +50,21 @@ function update()
 	end
 end
 
+-- Refresh immediately when the displayed status changes. Keeping the timer as
+-- a low-frequency fallback avoids a constant stream of update callbacks around
+-- the same time as a completed status check and keeps clicks responsive.
+watchState("isRemoteCheckRunning", refreshWidget)
+watchState("packageComparisonStatus", refreshWidget)
+watchState("isUpdateAvailable", refreshWidget)
+watchState("localHash", refreshWidget)
+watchState("remoteHash", refreshWidget)
+noctalia.setUpdateInterval(5000)
+
+-- Hooks
+function update()
+	refreshWidget()
+end
+
 function onClick()
-	noctalia.togglePanel("avivbintangaringga/nix-monitor:panel")
+	noctalia.togglePanel("luisrocha/nix-monitor:panel")
 end

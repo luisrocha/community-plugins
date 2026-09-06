@@ -1,12 +1,12 @@
-id              = "avivbintangaringga/nix-monitor"
+id              = "luisrocha/nix-monitor"
 name            = "Nix Monitor"
 version         = "1.3.1"
 plugin_api      = 3
 icon            = "package"
-author          = "avivbintangaringga"
+author          = "avivbintangaringga, luisrocha"
 description     = "Nixpkgs update monitor"
 tags            = [ "nixos", "utility" ]
-dependencies    = [ "nix", "nixos-version", "nixos-rebuild", "nix-store", "git", "du", "cat", "echo", "read", "awk", "grep", "tail", "wc", "kill", "pkill" ]
+dependencies    = [ "nix", "nix-instantiate", "nixos-version", "nixos-rebuild", "nix-store", "git", "du", "cat", "echo", "read", "awk", "grep", "tail", "wc", "kill", "pkill", "sh", "cp", "mktemp", "rm" ]
 license         = "MIT"
 
 [[widget]]
@@ -84,6 +84,27 @@ key         = "unknown_color"
 type        = "color"
 label_key   = "setting.widget.unknown_color.label"
 default     = "on_surface"
+
+[[setting]]
+key             = "flake_path"
+type            = "string"
+label_key       = "setting.flake_path.label"
+description_key = "setting.flake_path.description"
+default         = ""
+
+[[setting]]
+key             = "flake_input"
+type            = "string"
+label_key       = "setting.flake_input.label"
+description_key = "setting.flake_input.description"
+default         = "nixpkgs"
+
+[[setting]]
+key             = "nixos_configuration"
+type            = "string"
+label_key       = "setting.nixos_configuration.label"
+description_key = "setting.nixos_configuration.description"
+default         = ""
 
 [[setting]]
 key             = "branch"

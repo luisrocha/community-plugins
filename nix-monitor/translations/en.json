@@ -11,26 +11,39 @@
     "optimize_command_is_empty": "Optimize command is empty!",
     "update_check_completed": "NixOS update check completed!",
     "update_command_is_empty": "Update command is empty!",
+    "update_configuration_incomplete": "Configure a flake path, input, and NixOS configuration, or provide an update command override.",
     "update_is_available": "NixOS update is available!"
   },
   "panel": {
+    "back_to_overview": "Back to overview",
     "cancel": "Cancel",
     "check": "Check",
+    "check_details": "Check details",
     "clean": "Clean",
     "closure_size": "Closure size",
     "current": "Current",
     "last_checked": "Last checked",
     "local": "Local",
+    "newest": "Newest",
+    "no_package_updates": "No package updates",
     "optimize": "Optimize",
+    "package": "Package",
+    "package_details_unavailable": "No package details available",
+    "packages": "Packages",
     "remote": "Remote",
     "store_size": "Store size",
+    "system_packages": "System packages",
+    "system": "System",
     "title": "Nix Monitor",
-    "update": "Update"
+    "update": "Update",
+    "user_packages": "User packages",
+    "user": "User",
+    "version": "Version"
   },
   "setting": {
     "branch": {
-      "description": "Which nixpkgs branch to use",
-      "label": "Branch"
+      "description": "Nixpkgs branch to check when no flake path is configured",
+      "label": "Fallback branch"
     },
     "clean_command": {
       "description": "Command to run when clicking Clean button",
@@ -39,6 +52,18 @@
     "close_on_enter": {
       "description": "Add 'Press enter to exit' on the terminal window",
       "label": "Close on press Enter"
+    },
+    "flake_input": {
+      "description": "Flake input whose locked and upstream revisions are compared",
+      "label": "Nixpkgs flake input"
+    },
+    "flake_path": {
+      "description": "Directory containing the flake to monitor; leave empty to use the fallback branch",
+      "label": "Flake path"
+    },
+    "nixos_configuration": {
+      "description": "NixOS configuration output rebuilt after updating the monitored flake input",
+      "label": "NixOS configuration"
     },
     "generation_check_interval": {
       "description": "How often to check NixOS and Home Manager generations (in minutes)",
@@ -115,8 +140,8 @@
       "label": "Update check interval"
     },
     "update_command": {
-      "description": "Command to run when clicking Update button",
-      "label": "Update command"
+      "description": "Optional command override; when empty, Update uses the configured flake path, input, and NixOS configuration",
+      "label": "Update command override"
     },
     "widget": {
       "checking_color": {

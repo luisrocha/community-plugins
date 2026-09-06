@@ -1,13 +1,15 @@
 # Nix Monitor
 
-Nix Monitor compares the local Nixpkgs revision with a remote branch and shows
-NixOS generations, store size, closure size, and update status from the bar.
+Nix Monitor compares a flake's locked Nixpkgs revision with its configured
+upstream source, or the local NixOS revision with a fallback remote branch, and shows
+NixOS generations, store size, closure size, system and user package counts,
+and update status from the bar.
 
 ## Plugin
 
 | Field | Value |
 | --- | --- |
-| ID | `avivbintangaringga/nix-monitor` |
+| ID | `luisrocha/nix-monitor` |
 | Entries | Bar widget: `nix-monitor`; panel: `panel`; service: `service` |
 
 ## Requirements
@@ -21,17 +23,23 @@ is shown when `home-manager` is available.
 
 Add the `nix-monitor` widget to a bar. Click it to open a panel showing local
 and remote Nixpkgs revisions, NixOS and Home Manager generations, store usage,
-and update controls.
+system and user package counts, and update controls. Select the package summary
+at the bottom to open a package view with System and User tabs and a bounded
+scrollable list. Select **Back to overview** or any package row to return to the
+main panel. Opening the panel always starts with the overview.
 
 Open the panel directly with:
 
 ```sh
-noctalia msg panel-toggle avivbintangaringga/nix-monitor:panel
+noctalia msg panel-toggle luisrocha/nix-monitor:panel
 ```
 
-Set `update_command` before using **Update**. **Optimize** runs the configured command `nix-store --optimise -vv`. **Clean** runs the configured
-cleanup command, which defaults to `nix-collect-garbage -d`. All commands open
-in a terminal so you can review their output.
+Set `flake_path`, `flake_input`, and `nixos_configuration` to make **Update**
+update the monitored input and rebuild that flake output. `update_command` can
+still override the generated command. **Optimize** runs the configured command
+`nix-store --optimise -vv`. **Clean** runs the configured cleanup command, which
+defaults to `nix-collect-garbage -d`. All commands open in a terminal so you can
+review their output.
 
 ## Settings
 
@@ -42,12 +50,15 @@ Update behavior:
 | `update_check_interval` | `60` | Minutes between remote revision checks. |
 | `update_check_duration_threshold` | `5` | Minutes before an update check is cancelled. |
 | `generation_check_interval` | `60` | Minutes between NixOS and Home Manager generation checks. |
-| `system_stats_check_interval` | `60` | Minutes between store-statistics checks. |
+| `system_stats_check_interval` | `60` | Minutes between store and package-statistics checks. |
 | `system_stats_check_duration_threshold` | `15` | Minutes before a statistics check is cancelled. |
 | `show_update_check_notification` | `false` | Notifies when an update check starts and finishes. |
 | `show_update_available_notification` | `true` | Notifies when a newer revision is available. |
-| `branch` | `nixos-unstable` | Nixpkgs branch compared by the service. |
-| `update_command` | *(empty)* | Command launched by the panel's **Update** button. |
+| `flake_path` | *(empty)* | Directory containing the flake whose input should be monitored. |
+| `flake_input` | `nixpkgs` | Input read from that flake's lock data and upstream source. |
+| `nixos_configuration` | *(empty)* | NixOS configuration output rebuilt after updating the monitored input. |
+| `branch` | `nixos-unstable` | Fallback branch used when `flake_path` is empty. |
+| `update_command` | *(empty)* | Optional override for the generated update and rebuild command. |
 | `optimize_command` | `nix-store --optimize -vv` | Command launched by the panel's **Optimize** button. |
 | `clean_command` | `nix-collect-garbage -d` | Command launched by the panel's **Clean** button. |
 | `close_on_enter` | `true` | Keeps the command terminal open until Enter is pressed. |
@@ -67,6 +78,26 @@ Widget appearance:
 
 ## Notes
 
-Remote checks contact the configured Nixpkgs Git source. The service writes
+Package details compare **Current** versions evaluated from the configured flake's
+existing lockfile with **Newest** versions after updating its selected input in
+a temporary copy. This follows the built-in Update action and includes integrated
+Home Manager packages for the current user. Custom update commands cannot be
+predicted and display an unavailable comparison. Multiple versions of the same
+package are grouped. These are evaluated configuration
+versions, which can differ from the running generation until it is rebuilt.
+The list, summary, and tab counts show only existing packages whose versions
+change. Unchanged packages, additions, and removals are excluded. A successful
+comparison with no changes displays zero and **No package updates**. Package
+comparisons run with startup, scheduled, and manual update checks. Opening the
+panel or package details displays the cached result without starting a new check.
+
+Package comparisons run `sh`, `cp`, `mktemp`, `rm`, `nix-instantiate`, and Nix evaluation. They may download
+flake inputs and write to the Nix cache, but never rebuilds or activates a system.
+The original flake and lockfile are not changed.
+
+When `flake_path` is configured, the plugin reads the locked revision and the
+GitHub owner, repository, and ref for `flake_input` from the flake itself. The
+branch setting is only used by the legacy non-flake mode. Remote checks contact
+the resulting Nixpkgs Git source. The service writes
 temporary revision, size, and PID files under Noctalia's state directory and
 terminates overdue helper processes using the declared process tools.
