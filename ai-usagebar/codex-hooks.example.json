@@ -12,17 +12,6 @@
         ]
       }
     ],
-    "PermissionRequest": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "noctalia msg plugin luisrocha/ai-usagebar:poller all agent-status waiting >/dev/null 2>&1",
-            "timeout": 3
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "^request_user_input$",

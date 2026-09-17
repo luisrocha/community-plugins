@@ -39,7 +39,7 @@
       "label": "Show icon"
     },
     "show_agent_status": {
-      "description": "Shows a green, yellow, or red dot when the agent is idle, running, or waiting for your input.",
+      "description": "Shows a green, yellow, or red dot when the agent is idle, running, or has asked you a question.",
       "label": "Show agent semaphore"
     },
     "show_name": {

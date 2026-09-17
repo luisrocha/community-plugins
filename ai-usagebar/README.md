@@ -57,9 +57,9 @@ neither. Countdowns show days and hours from 24 hours onward, and hours and
 minutes below that.
 
 The round semaphore immediately right of the provider icon reports the local Codex agent:
-green is idle, yellow is running, and red means it is waiting for your input or
-an approval. Turn **Show agent semaphore** off in the widget settings when you
-only want quota information.
+green is idle, yellow is running, and red means it has asked you a question.
+Turn **Show agent semaphore** off in the widget settings when you only want
+quota information.
 
 Codex lifecycle hooks supply that state. Merge
 [`codex-hooks.example.json`](codex-hooks.example.json) into
@@ -67,6 +67,12 @@ Codex lifecycle hooks supply that state. Merge
 with `/hooks`. The hooks send only `idle`, `running`, or `waiting` to the plugin
 over Noctalia's local IPC; they do not send prompts or responses. Without the
 hooks, the semaphore remains green.
+
+Approval prompts deliberately leave the semaphore yellow. Codex runs its
+`PermissionRequest` hook before showing an approval, but has no corresponding
+event when you answer; clearing red in `PostToolUse` would keep it red until the
+approved tool finished. Explicit agent questions do have a matching
+`PostToolUse`, so their red state clears as soon as your answer is submitted.
 
 When editing `config.toml` by hand, create a named instance. A raw widget id in
 the bar list creates an anonymous instance with no settings of its own:
